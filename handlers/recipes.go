@@ -3,6 +3,10 @@ package handlers
 import (
 	"context"
 	"fmt"
+	"io"
+	"os"
+	"path/filepath"
+	"strings"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/adaptor"
@@ -51,7 +55,9 @@ func HandleRecipeDetail(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).SendString("Invalid recipe slug")
 	}
 
-	recipe, err := gorm.G[models.Recipe](database.DBConn).Where("slug = ?", slug).First(context.Background())
+	recipe, err := gorm.G[models.Recipe](database.DBConn).Preload("Media", func(db gorm.PreloadBuilder) error {
+		return nil
+	}).Where("slug = ?", slug).First(context.Background())
 
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).SendString("Failed to load recipe")
@@ -122,7 +128,11 @@ func HandleRecipeUpdate(c *fiber.Ctx) error {
 
 	editTarget := ""
 
-	if recipeData.Name != "" {
+	// Check if an image file was uploaded
+	fileHeader, err := c.FormFile("image")
+	if err == nil && fileHeader != nil {
+		editTarget = "image"
+	} else if recipeData.Name != "" {
 		editTarget = "name"
 	} else if recipeData.Description != "" {
 		editTarget = "description"
@@ -138,6 +148,66 @@ func HandleRecipeUpdate(c *fiber.Ctx) error {
 		redirect = true
 	case "description":
 		gorm.G[models.Recipe](database.DBConn).Where("ID = ?", recipe.ID).Update(context.Background(), "description", recipeData.Description)
+	case "image":
+		// Handle file upload
+		file, err := fileHeader.Open()
+		if err != nil {
+			return c.Status(fiber.StatusInternalServerError).SendString("Failed to open uploaded file")
+		}
+		defer file.Close()
+
+		// Get file extension
+		ext := filepath.Ext(fileHeader.Filename)
+		if ext == "" {
+			ext = ".jpg" // default extension
+		}
+		ext = strings.ToLower(ext)
+		
+		// Determine file type based on extension
+		fileType := strings.TrimPrefix(ext, ".")
+
+		// Create Media record
+		media := &models.Media{
+			FileName: fileHeader.Filename,
+			FileType: fileType,
+		}
+		
+		err = gorm.G[models.Media](database.DBConn).Create(context.Background(), media)
+		if err != nil {
+			return c.Status(fiber.StatusInternalServerError).SendString("Failed to create media record")
+		}
+
+		// Save file to disk with media ID as filename
+		mediaDir := "./assets/media"
+		if err := os.MkdirAll(mediaDir, 0755); err != nil {
+			return c.Status(fiber.StatusInternalServerError).SendString("Failed to create media directory")
+		}
+
+		filePath := filepath.Join(mediaDir, media.ID+"."+media.FileType)
+		destFile, err := os.Create(filePath)
+		if err != nil {
+			return c.Status(fiber.StatusInternalServerError).SendString("Failed to create file")
+		}
+		defer destFile.Close()
+
+		_, err = io.Copy(destFile, file)
+		if err != nil {
+			return c.Status(fiber.StatusInternalServerError).SendString("Failed to save file")
+		}
+
+		// Update recipe with media ID
+		_, err = gorm.G[models.Recipe](database.DBConn).Where("ID = ?", recipe.ID).Update(context.Background(), "media_id", media.ID)
+		if err != nil {
+			return c.Status(fiber.StatusInternalServerError).SendString("Failed to update recipe")
+		}
+
+		// Reload recipe with media
+		recipe, err = gorm.G[models.Recipe](database.DBConn).Preload("Media", func(db gorm.PreloadBuilder) error {
+			return nil
+		}).Where("slug = ?", slug).First(context.Background())
+		if err != nil {
+			return c.Status(fiber.StatusInternalServerError).SendString("Failed to reload recipe")
+		}
 	}
 
 	layoutViewModel := GetLayoutModel(c, recipe.Name, false)
@@ -157,6 +227,8 @@ func HandleRecipeUpdate(c *fiber.Ctx) error {
 		pageContent = components.EditableTextField("text-3xl font-bold", fmt.Sprintf("/recipes/%s", recipe.Slug), "name", recipeData.Name, "Name")
 	case "description":
 		pageContent = components.EditableTextArea("mb-4", fmt.Sprintf("/recipes/%s", recipe.Slug), "description", recipeData.Description, "Description")
+	case "image":
+		pageContent = components.EditableImage("w-full h-64 mb-4 bg-gray-200", fmt.Sprintf("/recipes/%s", recipe.Slug), recipe.Media, "Recipe Image")
 	default:
 		pageContent = htmlviews.RecipeDetailPage(&recipe)
 	}

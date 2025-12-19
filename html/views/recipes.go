@@ -105,7 +105,7 @@ func RecipeDetailPage(recipe *models.Recipe) gomponents.Node {
 		RecipeDetailNavigation(recipe),
 		html.Div(
 			html.Class("max-w-3xl mx-auto p-6 rounded-lg shadow-md bg-base-300 text-base-content shadow-primary"),
-			components.EditableImage("w-full h-64 mb-4 bg-gray-200", fmt.Sprintf("/recipes/%s", recipe.Slug), nil, "Recipe Image"),
+			components.EditableImage("w-full h-64 mb-4 bg-gray-200", fmt.Sprintf("/recipes/%s", recipe.Slug), recipe.Media, "Recipe Image"),
 			html.H1(
 				html.Class("text-3xl font-bold mb-4"),
 				gomponents.Text(recipe.Name),
