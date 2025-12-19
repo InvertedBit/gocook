@@ -1,3 +1,4 @@
 .env.local
 tmp/*
 node_modules/*
+gocook
