@@ -130,7 +130,7 @@ func HandleRecipeUpdate(c *fiber.Ctx) error {
 
 	// Check if an image file was uploaded
 	fileHeader, err := c.FormFile("image")
-	if err == nil && fileHeader != nil {
+	if err == nil {
 		editTarget = "image"
 	} else if recipeData.Name != "" {
 		editTarget = "name"
@@ -138,8 +138,6 @@ func HandleRecipeUpdate(c *fiber.Ctx) error {
 		editTarget = "description"
 	}
 
-	if recipeData.Name != "" {
-	}
 	switch editTarget {
 	case "name":
 		recipeData.Slug = slugger.Make(recipeData.Name)
@@ -158,10 +156,20 @@ func HandleRecipeUpdate(c *fiber.Ctx) error {
 
 		// Get file extension
 		ext := filepath.Ext(fileHeader.Filename)
-		if ext == "" {
-			ext = ".jpg" // default extension
-		}
 		ext = strings.ToLower(ext)
+		
+		// Validate file extension - only allow common image formats
+		validExtensions := map[string]bool{
+			".jpg":  true,
+			".jpeg": true,
+			".png":  true,
+			".gif":  true,
+			".webp": true,
+		}
+		
+		if !validExtensions[ext] {
+			return c.Status(fiber.StatusBadRequest).SendString("Invalid file type. Only JPG, PNG, GIF, and WebP images are allowed")
+		}
 		
 		// Determine file type based on extension
 		fileType := strings.TrimPrefix(ext, ".")
@@ -180,23 +188,31 @@ func HandleRecipeUpdate(c *fiber.Ctx) error {
 		// Save file to disk with media ID as filename
 		mediaDir := "./assets/media"
 		if err := os.MkdirAll(mediaDir, 0755); err != nil {
+			// Clean up media record if directory creation fails
+			gorm.G[models.Media](database.DBConn).Where("ID = ?", media.ID).Delete(context.Background())
 			return c.Status(fiber.StatusInternalServerError).SendString("Failed to create media directory")
 		}
 
 		filePath := filepath.Join(mediaDir, media.ID+"."+media.FileType)
 		destFile, err := os.Create(filePath)
 		if err != nil {
+			// Clean up media record if file creation fails
+			gorm.G[models.Media](database.DBConn).Where("ID = ?", media.ID).Delete(context.Background())
 			return c.Status(fiber.StatusInternalServerError).SendString("Failed to create file")
 		}
 		defer destFile.Close()
 
 		_, err = io.Copy(destFile, file)
 		if err != nil {
+			// Clean up media record and file if save fails
+			destFile.Close()
+			os.Remove(filePath)
+			gorm.G[models.Media](database.DBConn).Where("ID = ?", media.ID).Delete(context.Background())
 			return c.Status(fiber.StatusInternalServerError).SendString("Failed to save file")
 		}
 
 		// Update recipe with media ID
-		_, err = gorm.G[models.Recipe](database.DBConn).Where("ID = ?", recipe.ID).Update(context.Background(), "media_id", media.ID)
+		_, err = gorm.G[models.Recipe](database.DBConn).Where("ID = ?", recipe.ID).Update(context.Background(), "MediaID", media.ID)
 		if err != nil {
 			return c.Status(fiber.StatusInternalServerError).SendString("Failed to update recipe")
 		}
