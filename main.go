@@ -29,7 +29,7 @@ func main() {
 		panic("failed to connect database")
 	}
 
-	db.AutoMigrate(&models.Recipe{}, &models.InstructionStep{}, &models.Ingredient{}, &models.RecipeIngredient{})
+	db.AutoMigrate(&models.Media{}, &models.Recipe{}, &models.InstructionStep{}, &models.Ingredient{}, &models.RecipeIngredient{})
 
 	database.DBConn = db
 

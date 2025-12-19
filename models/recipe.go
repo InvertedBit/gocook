@@ -19,6 +19,8 @@ type Recipe struct {
 	Name              string
 	Slug              string `gorm:"uniqueIndex"`
 	Description       string
+	MediaID           *string
+	Media             *Media `gorm:"foreignKey:MediaID"`
 	RecipeIngredients []*RecipeIngredient
 	Instructions      []*InstructionStep `gorm:"foreignKey:RecipeID"`
 	Previous          *Recipe            `gorm:"constraint:OnUpdate:CASCADE,OnDelete:SET NULL"`

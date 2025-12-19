@@ -128,6 +128,7 @@ func EditableImage(classes string, endpoint string, image *models.Media, display
 			html.Class("eif-form"),
 			html.Input(
 				html.Type("file"),
+				html.Name("image"),
 				html.Class("file-input"),
 			),
 			html.Button(
