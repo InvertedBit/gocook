@@ -1,0 +1,59 @@
+package partials
+
+import "github.com/invertedbit/gocook/viewmodels"
+
+templ Navbar(model *viewmodels.NavbarViewModel) {
+    <div hx-boost="true" class="navbar bg-base-300 shadow-sm">
+        <div class="navbar-start">
+            <div class="dropdown">
+                <div tabindex="0" role="button" class="btn btn-ghost lg:hidden">
+                    <h1>GoCook</h1>
+                </div>
+                <ul
+                    tabindex="0"
+                    class="menu menu-sm dropdown-content bg-base-200 rounded-box z-1 mt-3 w-52 p-2 shadow">
+                    for _, rootItem := range model.Items {
+                        <li>
+                            <a href={ rootItem.Link }>{ rootItem.Label }</a>
+                            if len(rootItem.Children) > 0 {
+                                <ul class="p-2">
+                                    for _, childItem := range rootItem.Children {
+                                        <li>
+                                            <a href={ childItem.Link }>{ childItem.Label }</a>
+                                        </li>
+                                    }
+                                </ul>
+                            }
+                        </li>
+                    }
+                </ul>
+            </div>
+            <a class="btn btn-ghost text-xl">GoCook</a>
+        </div>
+        <div class="navbar-center hidden lg:flex">
+            <ul class="menu menu-horizontal px-1">
+                for _, rootItem := range model.Items {
+                    <li>
+                        if len(rootItem.Children) > 0 {
+                            <details>
+                                <summary class="text-nowrap">{ rootItem.Label }</summary>
+                                <ul class="p-2 z-10">
+                                    for _, childItem := range rootItem.Children {
+                                        <li>
+                                            <a href={ childItem.Link } class="text-nowrap">{ childItem.Label }</a>
+                                        </li>
+                                    }
+                                </ul>
+                            </details>
+                        } else {
+                            <a href={ rootItem.Link } class="text-nowrap">{ rootItem.Label }</a>
+                        }
+                    </li>
+                }
+            </ul>
+        </div>
+        <div class="navbar-end">
+            <a class="btn">Button</a>
+        </div>
+    </div>
+}

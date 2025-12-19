@@ -1,0 +1,21 @@
+package views
+
+import "github.com/invertedbit/gocook/models"
+import "github.com/invertedbit/gocook/views/partials"
+import "github.com/invertedbit/gocook/viewmodels"
+
+templ RecipeListView(recipes []*models.Recipe) {
+    <div class="flex flex-row gap-5">
+        for _, recipe := range recipes {
+            <div class="w-1/4">
+                @partials.RecipeCard(recipe)
+            </div>
+        }
+    </div>
+}
+
+templ RecipeListPage(layoutModel *viewmodels.LayoutViewModel, recipes []*models.Recipe) {
+    @Layout(layoutModel) {
+            @RecipeListView(recipes)
+    }
+}

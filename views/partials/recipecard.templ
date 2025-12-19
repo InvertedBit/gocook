@@ -1,0 +1,16 @@
+package partials
+
+import "github.com/invertedbit/gocook/models"
+
+
+templ RecipeCard(recipe *models.Recipe) {
+    <div class="card bg-base-300 shadow-md shadow-secondary hover:shadow-lg hover:shadow-primary transition-shadow h-full">
+        <div class="card-body">
+            <h5 class="card-title">{ recipe.Name }</h5>
+            <p class="card-text">{ recipe.Description }</p>
+            <div class="mt-6">
+                <a href={recipe.GetPermalink()} class="btn btn-primary">View Recipe</a>
+            </div>
+        </div>
+    </div>
+}

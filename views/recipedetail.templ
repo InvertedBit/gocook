@@ -1,0 +1,39 @@
+package views
+
+import "github.com/invertedbit/gocook/models"
+import "github.com/invertedbit/gocook/viewmodels"
+
+templ IngredientWithQuantity(ingredient *models.RecipeIngredient) {
+    if ingredient.Quantity == 1 {
+        { ingredient.Quantity } { ingredient.Ingredient.Name }
+    } else {
+        { ingredient.Quantity } { ingredient.Ingredient.PluralName }
+    }
+}
+
+templ RecipeDetailView(recipe *models.Recipe) {
+    <div class="max-w-3xl mx-auto p-6 rounded-lg shadow-md bg-base-300 text-base-content shadow-primary">
+        <h1 class="text-3xl font-bold mb-4">{ recipe.Name }</h1>
+        <p class="mb-4">{ recipe.Description }</p>
+        <h2 class="text-2xl font-semibold mb-2">Ingredients</h2>
+        <ul class="list-disc list-inside mb-4">
+            for _, ingredient := range recipe.RecipeIngredients {
+                <li>
+                    @IngredientWithQuantity(ingredient)
+                </li>
+            }
+        </ul>
+        <h2 class="text-2xl font-semibold mb-2">Instructions</h2>
+        <ol class="list-decimal list-inside">
+            for _, step := range recipe.Instructions {
+                <li class="mb-2">{ step }</li>
+            }
+        </ol>
+    </div>
+}
+
+templ RecipeDetailPage(layoutModel *viewmodels.LayoutViewModel, recipe *models.Recipe) {
+    @Layout(layoutModel) {
+            @RecipeDetailView(recipe)
+    }
+}

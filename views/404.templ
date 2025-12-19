@@ -1,0 +1,14 @@
+package views
+
+import "github.com/invertedbit/gocook/viewmodels"
+
+
+templ NotFoundPage(layoutModel *viewmodels.LayoutViewModel) {
+    @Layout(layoutModel) {
+        <div class="text-center">
+            <h1 class="text-5xl font-bold">404</h1>
+            <p class="text-xl mt-4">Page Not Found</p>
+            <a href="/" class="btn btn-primary mt-6">Go to Home</a>
+        </div>
+    }
+}

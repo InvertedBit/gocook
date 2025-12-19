@@ -1,0 +1,21 @@
+{
+  "name": "gocook",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "build": "tailwindcss build -o assets/css/tailwind.css",
+    "watch": "tailwindcss build -o assets/css/tailwind.css --watch"
+  },
+  "author": "Alex Scherer <alex.scherer@outlook.com>",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "@tailwindcss/cli": "^4.1.11",
+    "htmx": "^0.0.2",
+    "tailwindcss": "^4.1.11"
+  },
+  "devDependencies": {
+    "daisyui": "^5.1.6",
+    "vite": "^7.1.2"
+  }
+}

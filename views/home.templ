@@ -1,0 +1,13 @@
+package views
+
+import "github.com/invertedbit/gocook/viewmodels"
+
+templ HomeView(text string) {
+    <h1>{ text }</h1>
+}
+
+templ HomePage(layoutModel *viewmodels.LayoutViewModel, text string) {
+    @Layout(layoutModel) {
+        @HomeView(text)
+    }
+}
